@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "736437835105",
+    "project_id": "salo-production-13fae",
+    "storage_bucket": "salo-production-13fae.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736437835105:android:0ef4c1d8e6a6b755106120",
+        "android_client_info": {
+          "package_name": "com.dardshti.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAp4RmNklsS9fPDuh5K9WEHZ0jBm8rwEt8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

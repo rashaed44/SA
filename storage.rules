@@ -1,0 +1,26 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function verifiedOwner(uid) {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/profile/{fileName} {
+      allow read: if request.auth != null;
+      allow create, update: if verifiedOwner(uid)
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType in [
+          'image/jpeg', 'image/png', 'image/webp'
+        ];
+      allow delete: if verifiedOwner(uid);
+    }
+
+    // Media uploads remain disabled until a reviewed client flow and story/chat
+    // membership checks are added. This prevents arbitrary MIME uploads now.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

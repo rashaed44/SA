@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function verifiedUser() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    function chatMember(chatId) {
+      let chat = get(/databases/$(database)/documents/chats/$(chatId));
+      return verifiedUser()
+        && chat.data.memberUids is list
+        && request.auth.uid in chat.data.memberUids;
+    }
+
+    // Public profile fields only. Email and security metadata live in privateUsers.
+    match /users/{uid} {
+      allow get, list: if verifiedUser();
+      allow create, update, delete: if false;
+    }
+
+    match /privateUsers/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+
+    match /userSettings/{uid} {
+      allow get: if verifiedUser() && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+
+    match /chats/{chatId} {
+      allow get, list: if verifiedUser()
+        && request.auth.uid in resource.data.memberUids;
+      allow create, update, delete: if false;
+
+      match /messages/{messageId} {
+        allow get, list: if chatMember(chatId);
+        allow create, update, delete: if false;
+      }
+    }
+
+    // Stories are returned by a server function that applies friend/block rules
+    // in one bounded query plan; clients cannot bypass that privacy check.
+    match /stories/{storyId} {
+      allow read, write: if false;
+    }
+
+    match /groups/{groupId} {
+      allow get, list: if verifiedUser() && resource.data.isPublic == true;
+      allow create, update, delete: if false;
+
+      match /members/{memberUid} {
+        allow get: if verifiedUser() && request.auth.uid == memberUid;
+        allow list, create, update, delete: if false;
+      }
+    }
+
+    match /appSettings/{settingId} {
+      allow get, list: if verifiedUser();
+      allow create, update, delete: if false;
+    }
+
+    // Internal mappings, friendship/block graphs, admin records, and rate limits
+    // are server-only. Any collection without an explicit allow is denied.
+    match /usernames/{username} {
+      allow read, write: if false;
+    }
+    match /friends/{uid}/{document=**} {
+      allow read, write: if false;
+    }
+    match /blocks/{uid}/{document=**} {
+      allow read, write: if false;
+    }
+    match /_serverRateLimits/{document=**} {
+      allow read, write: if false;
+    }
+    match /roles/{uid} {
+      allow read, write: if false;
+    }
+    match /adminLogs/{document=**} {
+      allow read, write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
